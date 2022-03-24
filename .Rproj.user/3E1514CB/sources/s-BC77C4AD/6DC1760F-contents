@@ -1,0 +1,102 @@
+.Rproj.user
+1. #create censoring variables (right censoring)
+survdate$censored[survdate$Turnover==0|survdate$Turnover==2]<-0
+
+2. # inspection distribution the los variables
+hist(survdate$LOS)
+hist(subset(survdate,Turnover==0)$LOS)
+hist(subset(survdate,Turnover==1)$LOS)
+
+3.#KM analysis --Life table 
+install.packages("survival")
+library('survival')
+
+4. #specify KM analysis model 
+ km_F1<-survfit(Surv(LOS,censored)~1,
+                 data = survdate)
+print(km_F1)
+
+5.# summarize km analysis results using defult time intervals
+# creat a life table 
+summary(km_F1)
+
+6.# creat a life table for summarize km analysis result using pre-specified time interval
+summary(km_F1,times = c(30,60,90*(1:30)))
+
+
+7.#plot the cumlitive survival rates (P)
+plot (km_F1)
+#install. packages 
+install.packages('survminer')
+library(survminer)
+install.packages("ggplot2")
+
+8.#plot 
+ggsurvplot(km_F1,data = survdate,risk.table = T,conf.int =T,
+           ggtheme = theme_minimal())
+
+
+9.# add an independent variables to reanalysis 
+# specify km analysis model with categorical covariate
+km_F2<-survfit(Surv(LOS,censored)~Race,
+               data = survdate)
+print(km_F2)
+
+10.# summarize km analysis results using defult time intervals
+# creat a life table 
+summary(km_F2)
+
+11. # creat a life table for summarize km analysis result using pre-specified time interval
+summary(km_F2,times = c(30,60,90*(1:30)))
+
+12. #plot the cumlitive survival rates (P)
+plot (km_F2)
+
+ggsurvplot(km_F2,data = survdate,risk.table = T,conf.int =T,
+           pval = T,
+           pval.method = T,
+                      ggtheme = theme_minimal())
+
+#estimate cox proportional hazard model --Cox regassion model
+
+cox_reg1<-coxph(Surv(LOS,censored)~Race,
+                data = survdate)
+                    
+
+
+#estimate cox proportional hazard model --Cox regassion model
+
+cox_reg2<-coxph(Surv(LOS,censored)~Race+Pay_hourly+Pay_sat,
+                data = survdate)
+
+summary(cox_reg2)
+
+
+#grand-mean center continuous covarious 
+survdate$c_Pay_hourly<-scale(survdate$Pay_hourly,center = T, scale=F)
+survdate$c_Pay_sat<-scale(survdate$Pay_sat,center = T, scale=F)
+
+
+#change the referance data from the LH to the new order group
+
+survdate$HL_race<-factor(survdate$Race, levels = c('HL','B','W'))
+
+
+#nested comparisons 
+
+install.packages('tidyer')
+library(tidyr)
+
+
+cox_reg1<-coxph(Surv(LOS,censored)~Race,
+                data = drop_na(survdate,LOS, censored, Race, Pay_sat, Pay_hourly))
+
+summary(cox_reg1)
+
+
+
+cox_reg2<-coxph(Surv(LOS,censored)~Race+Pay_hourly+Pay_sat,
+                data = drop_na(survdate,LOS, censored, Race, Pay_sat, Pay_hourly)).Rproj.user
+.Rhistory
+.RData
+.Ruserdata
